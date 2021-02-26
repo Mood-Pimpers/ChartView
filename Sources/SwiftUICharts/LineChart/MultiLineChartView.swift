@@ -20,6 +20,7 @@ public struct MultiLineChartView: View {
     
     @State private var touchLocation:CGPoint = .zero
     @State private var showIndicatorDot: Bool = false
+    @State private var stepSize: CGFloat = 12
     @State private var currentValue: Double = 2 {
         didSet{
             if (oldValue != self.currentValue && showIndicatorDot) {
@@ -53,7 +54,8 @@ public struct MultiLineChartView: View {
                 form: CGSize = ChartForm.medium,
                 rateValue: Int? = nil,
                 dropShadow: Bool = true,
-                valueSpecifier: String = "%.1f") {
+                valueSpecifier: String = "%.1f",
+                stepSize: CGFloat) {
         
         self.data = data.map({ MultiLineChartData(points: $0.0, gradient: $0.1)})
         self.title = title
@@ -65,6 +67,12 @@ public struct MultiLineChartView: View {
         self.rateValue = rateValue
         self.dropShadow = dropShadow
         self.valueSpecifier = valueSpecifier
+        self.stepSize = stepSize
+    }
+    
+    public func convertFrameToStepSize(_ frame: CGRect, steps: CGFloat) -> CGRect {
+        let width = frame.size.width / stepSize * steps
+        return CGRect(origin: frame.origin, size: CGSize(width: width, height: frame.size.height))
     }
     
     public var body: some View {
@@ -74,7 +82,7 @@ public struct MultiLineChartView: View {
                 ZStack{
                     ForEach(0..<self.data.count) { i in
                         Line(data: self.data[i],
-                             frame: .constant(geometry.frame(in: .local)),
+                             frame: .constant(convertFrameToStepSize(geometry.frame(in: .local), steps: CGFloat(self.data[i].points.count))),
                              touchLocation: self.$touchLocation,
                              showIndicator: self.$showIndicatorDot,
                              minDataValue: .constant(self.globalMin),
@@ -103,7 +111,7 @@ public struct MultiLineChartView: View {
 struct MultiWidgetView_Previews: PreviewProvider {
     static var previews: some View {
         Group {
-            MultiLineChartView(data: [([8,23,54,32,12,37,7,23,43], GradientColors.orange),([9,11,40,28,19,30,4,35,27], GradientColors.bluPurpl)], title: "Line chart", legend: "Basic")
+            MultiLineChartView(data: [([8,23,54,32,12,37,7,23,43, 4, 15, 12], GradientColors.orange),([9,11,40,28,19], GradientColors.bluPurpl)], title: "Line chart", legend: "Basic", stepSize: 12.0)
                 .environment(\.colorScheme, .light)
         }
     }
